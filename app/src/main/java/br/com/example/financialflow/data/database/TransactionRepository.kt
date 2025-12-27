@@ -1,12 +1,13 @@
 package br.com.example.financialflow.data.database
 
+import android.content.Context
 import br.com.example.financialflow.data.model.CreditDetail
 import br.com.example.financialflow.data.model.DebitDetail
 import br.com.example.financialflow.data.model.Transaction
 import br.com.example.financialflow.data.model.TransactionType
 
-class TransactionRepository(private val database: AppDatabase) {
-
+class TransactionRepository(context : Context) {
+    private val database: AppDatabase = AppDatabase.getInstance(context = context)
     fun addTransaction(transaction: Transaction): Long {
         return database.insertTransaction(transaction)
     }

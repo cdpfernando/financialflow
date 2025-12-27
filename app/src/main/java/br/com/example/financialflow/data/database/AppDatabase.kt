@@ -39,7 +39,6 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(
     companion object {
         private const val DATABASE_NAME = "fluxo_caixa.db"
         private const val DATABASE_VERSION = 1
-
         private const val TABLE_TRANSACTIONS = "transactions"
         private const val COLUMN_ID = "id"
         private const val COLUMN_AMOUNT = "amount"
