@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Financial Flow</string>
+
+    <!-- TransactionType Enum -->
+    <string name="transaction_type_credit">Crédito</string>
+    <string name="transaction_type_debit">Débito</string>
+
+    <!-- CreditDetail Enum -->
+    <string name="credit_detail_salary">Salário</string>
+    <string name="credit_detail_extras">Extras</string>
+
+    <!-- DebitDetail Enum -->
+    <string name="debit_detail_food">Alimentação</string>
+    <string name="debit_detail_transport">Transporte</string>
+    <string name="debit_detail_health">Saúde</string>
+    <string name="debit_detail_housing">Moradia</string>
+
+</resources>
