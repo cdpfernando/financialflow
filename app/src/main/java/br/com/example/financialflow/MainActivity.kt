@@ -26,16 +26,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import br.com.example.financialflow.data.database.TransactionRepository
-import br.com.example.financialflow.data.model.CreditDetail
-import br.com.example.financialflow.data.model.DebitDetail
 import br.com.example.financialflow.data.model.Transaction
 import br.com.example.financialflow.data.model.TransactionType
 import br.com.example.financialflow.ui.theme.FinancialFlowTheme
+import java.time.LocalDateTime
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,19 +99,13 @@ fun TransactionScreen(
     modifier: Modifier = Modifier,
     repository: TransactionRepository,
     onNavigateToStatement: () -> Unit
-//    viewModel: Transaction = viewModel(),
 ) {
     val context = LocalContext.current
 
     var amount by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf(TransactionType.DEBIT) }
-
-    var isDebitDetailExpanded by remember { mutableStateOf(false) }
-    var selectedDebitDetail by remember { mutableStateOf(DebitDetail.FOOD) }
-
-    var isCreditDetailExpanded by remember { mutableStateOf(false) }
-    var selectedCreditDetail by remember { mutableStateOf(CreditDetail.SALARY) }
 
     Column(
         modifier = modifier
@@ -138,74 +130,6 @@ fun TransactionScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (selectedType == TransactionType.DEBIT) {
-            ExposedDropdownMenuBox(
-                expanded = isDebitDetailExpanded,
-                onExpandedChange = { isDebitDetailExpanded = it }
-            ) {
-                TextField(
-                    value = selectedDebitDetail.name,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Detalhe do Débito") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDebitDetailExpanded)
-                    },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = isDebitDetailExpanded,
-                    onDismissRequest = { isDebitDetailExpanded = false }
-                ) {
-                    DebitDetail.values().forEach { detail ->
-                        DropdownMenuItem(
-                            text = { Text(detail.name) },
-                            onClick = {
-                                selectedDebitDetail = detail
-                                isDebitDetailExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        } else {
-            ExposedDropdownMenuBox(
-                expanded = isCreditDetailExpanded,
-                onExpandedChange = { isCreditDetailExpanded = it }
-            ) {
-                TextField(
-                    value = selectedCreditDetail.name,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Detalhe do Crédito") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCreditDetailExpanded)
-                    },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = isCreditDetailExpanded,
-                    onDismissRequest = { isCreditDetailExpanded = false }
-                ) {
-                    CreditDetail.values().forEach { detail ->
-                        DropdownMenuItem(
-                            text = { Text(detail.name) },
-                            onClick = {
-                                selectedCreditDetail = detail
-                                isCreditDetailExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
         TextField(
             value = amount,
             onValueChange = { amount = it },
@@ -223,27 +147,31 @@ fun TransactionScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextField(
+            value = date,
+            onValueChange = { date = it },
+            label = { Text("Data") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
                 val amountValue = amount.toDoubleOrNull() ?: 0.0
-                if (selectedType == TransactionType.DEBIT) {
-                    repository.addDebitTransaction(
-                        amount = amountValue,
-                        description = description,
-                        debitDetail = selectedDebitDetail
-                    )
-                } else {
-                    repository.addCreditTransaction(
-                        amount = amountValue,
-                        description = description,
-                        creditDetail = selectedCreditDetail
-                    )
-                }
+                repository.addTransaction(
+                    amount = amountValue,
+                    description = description,
+                    date = date,
+                    type = selectedType
+                )
+
                 Toast.makeText(context, "Transação salva!", Toast.LENGTH_SHORT).show()
                 amount = ""
                 description = ""
+                date = ""
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -253,21 +181,6 @@ fun TransactionScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(
-//            onClick = {
-//                val transactions = repository.getAllTransactions()
-//                val transactionsText = transactions.joinToString(separator = "\n") {
-//                    val detail = when (it.type) {
-//                        TransactionType.CREDIT -> it.creditDetail?.name
-//                        TransactionType.DEBIT -> it.debitDetail?.name
-//                    }
-//                    "R$${it.amount} - ${it.description} (${it.type}) - $detail"
-//                }
-//                Toast.makeText(
-//                    context,
-//                    transactionsText.ifEmpty { "Nenhuma transação encontrada." },
-//                    Toast.LENGTH_LONG
-//                ).show()
-//            },
             onClick = onNavigateToStatement,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -298,8 +211,9 @@ fun StatementScreen(
     val netBalance = remember { repository.getNetBalance() }
     val transactions = remember { repository.getAllTransactions() }
 
+
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.padding(16.dp).fillMaxSize()
     ) {
         Text(
             text = "Resumo Financeiro",
@@ -402,23 +316,13 @@ fun TransactionItem(transaction: br.com.example.financialflow.data.model.Transac
                 color = if (transaction.type == TransactionType.CREDIT) Color(0xFF008000) else Color.Red,
             )
 
-
-            //INSERIR DATA DA TRANSAÇÃO
-//            Text(
-//                text = transaction.date
-//            )
-
             Text(
                 text = transaction.description,
                 fontWeight = FontWeight.Bold
             )
 
-            val detail = when (transaction.type) {
-                TransactionType.CREDIT -> transaction.creditDetail?.name ?: ""
-                TransactionType.DEBIT -> transaction.debitDetail?.name ?: ""
-            }
             Text(
-                text = detail,
+                text = transaction.date,
                 fontSize = 12.sp,
                 color = Color.Gray
             )
@@ -429,6 +333,65 @@ fun TransactionItem(transaction: br.com.example.financialflow.data.model.Transac
             color = if (transaction.type == TransactionType.CREDIT) Color(0xFF008000) else Color.Red,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 8.dp)
+        )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Transaction Screen")
+@Composable
+fun TransactionScreenPreview() {
+    FinancialFlowTheme {
+        TransactionScreen(
+            repository = TransactionRepository(LocalContext.current),
+            onNavigateToStatement = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Statement Screen")
+@Composable
+fun StatementScreenPreview() {
+    FinancialFlowTheme {
+
+        StatementScreen(
+            repository = TransactionRepository(LocalContext.current),
+            modifier = Modifier
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Transaction Item - Credit")
+@Composable
+fun TransactionItemCreditPreview() {
+    FinancialFlowTheme {
+        TransactionItem(
+            transaction = Transaction(
+                id = 1,
+                amount = 1200.50,
+                description = "Salary",
+                type = TransactionType.CREDIT,
+                date = "01/09/2024",
+                createdAt = LocalDateTime.now()
+            )
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Transaction Item - Debit")
+@Composable
+fun TransactionItemDebitPreview() {
+    FinancialFlowTheme {
+        TransactionItem(
+            transaction = Transaction(
+                id = 2,
+                amount = 75.25,
+                description = "Groceries",
+                type = TransactionType.DEBIT,
+                date = "02/09/2024",
+                createdAt = LocalDateTime.now()
+            )
         )
     }
 }
