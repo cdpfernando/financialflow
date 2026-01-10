@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -33,6 +34,7 @@ import br.com.example.financialflow.data.database.TransactionRepository
 import br.com.example.financialflow.data.model.Transaction
 import br.com.example.financialflow.data.model.TransactionType
 import br.com.example.financialflow.ui.theme.FinancialFlowTheme
+import br.com.example.financialflow.ui.viewmodel.FinancialViewModel
 import java.time.LocalDateTime
 
 class MainActivity : ComponentActivity() {
@@ -47,6 +49,7 @@ class MainActivity : ComponentActivity() {
             FinancialFlowTheme {
 
                 val navController = rememberNavController()
+                val viewModel: FinancialViewModel = viewModel()
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
@@ -350,17 +353,6 @@ fun TransactionScreenPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Statement Screen")
-@Composable
-fun StatementScreenPreview() {
-    FinancialFlowTheme {
-
-        StatementScreen(
-            repository = TransactionRepository(LocalContext.current),
-            modifier = Modifier
-        )
-    }
-}
 
 @Preview(showBackground = true, name = "Transaction Item - Credit")
 @Composable
