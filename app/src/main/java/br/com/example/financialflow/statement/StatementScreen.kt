@@ -18,10 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.example.financialflow.data.database.TransactionRepository
+import br.com.example.financialflow.data.model.Transaction
 import br.com.example.financialflow.data.model.TransactionType
+import br.com.example.financialflow.ui.theme.FinancialFlowTheme
+import java.time.LocalDateTime
 
 
 @Composable
@@ -155,6 +159,41 @@ fun TransactionItem(transaction: br.com.example.financialflow.data.model.Transac
             color = if (transaction.type == TransactionType.CREDIT) Color(0xFF008000) else Color.Red,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 8.dp)
+        )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Transaction Item - Credit")
+@Composable
+fun TransactionItemCreditPreview() {
+    FinancialFlowTheme {
+        TransactionItem(
+            transaction = Transaction(
+                id = 1,
+                amount = 1200.50,
+                description = "Salary",
+                type = TransactionType.CREDIT,
+                date = "01/09/2024",
+                createdAt = LocalDateTime.now()
+            )
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Transaction Item - Debit")
+@Composable
+fun TransactionItemDebitPreview() {
+    FinancialFlowTheme {
+        TransactionItem(
+            transaction = Transaction(
+                id = 2,
+                amount = 75.25,
+                description = "Groceries",
+                type = TransactionType.DEBIT,
+                date = "02/09/2024",
+                createdAt = LocalDateTime.now()
+            )
         )
     }
 }
