@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
             FinancialFlowTheme {
 
                 val navController = rememberNavController()
-                val viewModel: TransactionViewModel = viewModel()
+
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 

@@ -21,9 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.example.financialflow.data.database.TransactionRepository
 import br.com.example.financialflow.data.model.Transaction
 import br.com.example.financialflow.data.model.TransactionType
+import br.com.example.financialflow.transactions.TransactionViewModel
 import br.com.example.financialflow.ui.theme.FinancialFlowTheme
 import java.time.LocalDateTime
 
@@ -31,7 +33,8 @@ import java.time.LocalDateTime
 @Composable
 fun StatementScreen(
     modifier: Modifier = Modifier,
-    repository: TransactionRepository
+    repository: TransactionRepository,
+    viewModel: StatementViewModel = viewModel()
 ) {
     val (totalCredits, totalDebits) = remember { repository.getBalance() }
     val netBalance = remember { repository.getNetBalance() }
