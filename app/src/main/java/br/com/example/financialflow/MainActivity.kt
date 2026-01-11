@@ -33,8 +33,11 @@ import androidx.navigation.compose.rememberNavController
 import br.com.example.financialflow.data.database.TransactionRepository
 import br.com.example.financialflow.data.model.Transaction
 import br.com.example.financialflow.data.model.TransactionType
+import br.com.example.financialflow.statement.StatementScreen
+import br.com.example.financialflow.statement.TransactionItem
+import br.com.example.financialflow.transactions.TransactionScreen
 import br.com.example.financialflow.ui.theme.FinancialFlowTheme
-import br.com.example.financialflow.ui.viewmodel.FinancialViewModel
+import br.com.example.financialflow.transactions.TransactionViewModel
 import java.time.LocalDateTime
 
 class MainActivity : ComponentActivity() {
@@ -49,7 +52,7 @@ class MainActivity : ComponentActivity() {
             FinancialFlowTheme {
 
                 val navController = rememberNavController()
-                val viewModel: FinancialViewModel = viewModel()
+                val viewModel: TransactionViewModel = viewModel()
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
@@ -96,249 +99,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TransactionScreen(
-    modifier: Modifier = Modifier,
-    repository: TransactionRepository,
-    onNavigateToStatement: () -> Unit
-) {
-    val context = LocalContext.current
-
-    var amount by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf(TransactionType.DEBIT) }
-
-    Column(
-        modifier = modifier
-    ) {
-        Text(text = "Cadastro de Transação")
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row {
-            Text("Tipo:")
-            RadioButton(
-                selected = selectedType == TransactionType.DEBIT,
-                onClick = { selectedType = TransactionType.DEBIT }
-            )
-            Text("Débito")
-            RadioButton(
-                selected = selectedType == TransactionType.CREDIT,
-                onClick = { selectedType = TransactionType.CREDIT }
-            )
-            Text("Crédito")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextField(
-            value = amount,
-            onValueChange = { amount = it },
-            label = { Text("Valor") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextField(
-            value = description,
-            onValueChange = { description = it },
-            label = { Text("Descrição") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextField(
-            value = date,
-            onValueChange = { date = it },
-            label = { Text("Data") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                val amountValue = amount.toDoubleOrNull() ?: 0.0
-                repository.addTransaction(
-                    amount = amountValue,
-                    description = description,
-                    date = date,
-                    type = selectedType
-                )
-
-                Toast.makeText(context, "Transação salva!", Toast.LENGTH_SHORT).show()
-                amount = ""
-                description = ""
-                date = ""
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Salvar Transação")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = onNavigateToStatement,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Listar Transações")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = {
-                val total = repository.getNetBalance()
-                Toast.makeText(context, "Saldo total: R$${"%.2f".format(total)}", Toast.LENGTH_LONG)
-                    .show()
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Calcular Saldo Total")
-        }
-    }
-}
-
-@Composable
-fun StatementScreen(
-    modifier: Modifier = Modifier,
-    repository: TransactionRepository
-) {
-    val (totalCredits, totalDebits) = remember { repository.getBalance() }
-    val netBalance = remember { repository.getNetBalance() }
-    val transactions = remember { repository.getAllTransactions() }
 
 
-    Column(
-        modifier = modifier.padding(16.dp).fillMaxSize()
-    ) {
-        Text(
-            text = "Resumo Financeiro",
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp
-        )
-
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Entradas"
-            )
-            Text(
-                text = "R$ ${"%.2f".format(totalCredits)}"
-            )
-        }
-
-        Spacer(
-            modifier = Modifier.height(4.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Saídas"
-            )
-            Text(
-                text = "R$ ${"%.2f".format(totalDebits)}",
-                color = Color.Red
-            )
-        }
-
-        Spacer(
-            modifier = Modifier.height(4.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Saldo"
-            )
-            Text(
-                text = "R$ ${"%.2f".format(netBalance)}",
-                color = if (netBalance >= 0) Color(0xFF008000) else Color.Red
-            )
-        }
-
-        Spacer(
-            modifier = Modifier.height(16.dp)
-        )
-
-        Text(
-            text = "Histórico de Transações"
-        )
-
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
-
-        LazyColumn(
-        ) {
-            items(transactions) { transaction ->
-                TransactionItem(transaction = transaction)
-                Divider(color = Color.LightGray, thickness = 0.5.dp)
-            }
-        }
-    }
-}
-
-@Composable
-fun TransactionItem(transaction: br.com.example.financialflow.data.model.Transaction) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            val type = when (transaction.type) {
-                TransactionType.CREDIT -> "C"
-                TransactionType.DEBIT -> "D"
-            }
-            Text(
-                text = type,
-                fontSize = 12.sp,
-                color = if (transaction.type == TransactionType.CREDIT) Color(0xFF008000) else Color.Red,
-            )
-
-            Text(
-                text = transaction.description,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = transaction.date,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-        }
-
-        Text(
-            text = "R$ ${"%.2f".format(transaction.amount)}",
-            color = if (transaction.type == TransactionType.CREDIT) Color(0xFF008000) else Color.Red,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-    }
-}
 
 
 @Preview(showBackground = true, name = "Transaction Screen")
