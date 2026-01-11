@@ -18,16 +18,16 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(
 ) {
 
     companion object {
-        private const val DATABASE_NAME = "fluxo_caixa.db"
-        private const val DATABASE_VERSION = 2
+         const val DATABASE_NAME = "fluxo_caixa.db"
+         const val DATABASE_VERSION = 2
 
-        private const val TABLE_TRANSACTIONS = "transactions"
-        private const val COLUMN_ID = "id"
-        private const val COLUMN_AMOUNT = "amount"
-        private const val COLUMN_DESCRIPTION = "description"
-        private const val COLUMN_TYPE = "type"
-        private const val COLUMN_DATE = "date"
-        private const val COLUMN_CREATED_AT = "created_at"
+         const val TABLE_TRANSACTIONS = "transactions"
+         const val COLUMN_ID = "id"
+         const val COLUMN_AMOUNT = "amount"
+         const val COLUMN_DESCRIPTION = "description"
+         const val COLUMN_TYPE = "type"
+         const val COLUMN_DATE = "date"
+         const val COLUMN_CREATED_AT = "created_at"
 
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -61,67 +61,5 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(
         }
     }
 
-    fun insertTransaction(transaction: Transaction): Long {
-        val db = writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_AMOUNT, transaction.amount)
-            put(COLUMN_DESCRIPTION, transaction.description)
-            put(COLUMN_TYPE, transaction.type.name)
-            put(COLUMN_DATE, transaction.date)
-            put(COLUMN_CREATED_AT, transaction.createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-        }
-        return db.insert(TABLE_TRANSACTIONS, null, values)
-    }
 
-    fun getAllTransactions(): List<Transaction> {
-        val db = readableDatabase
-        val cursor = db.query(
-            TABLE_TRANSACTIONS,
-            null, null, null, null, null,
-            "$COLUMN_CREATED_AT DESC"
-        )
-
-        val transactions = mutableListOf<Transaction>()
-        while (cursor.moveToNext()) {
-            transactions.add(cursorToTransaction(cursor))
-        }
-        cursor.close()
-        return transactions
-    }
-
-    fun getBalance(): Pair<Double, Double> {
-        val db = readableDatabase
-        var credits = 0.0
-        var debits = 0.0
-
-        val creditQuery = "SELECT SUM($COLUMN_AMOUNT) FROM $TABLE_TRANSACTIONS WHERE $COLUMN_TYPE = '${TransactionType.CREDIT.name}'"
-        db.rawQuery(creditQuery, null).use { cursor ->
-            if (cursor.moveToFirst()) {
-                credits = cursor.getDouble(0)
-            }
-        }
-
-        val debitQuery = "SELECT SUM($COLUMN_AMOUNT) FROM $TABLE_TRANSACTIONS WHERE $COLUMN_TYPE = '${TransactionType.DEBIT.name}'"
-        db.rawQuery(debitQuery, null).use { cursor ->
-            if (cursor.moveToFirst()) {
-                debits = cursor.getDouble(0)
-            }
-        }
-
-        return Pair(credits, debits)
-    }
-
-    private fun cursorToTransaction(cursor: Cursor): Transaction {
-        return Transaction(
-            id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID)),
-            amount = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_AMOUNT)),
-            description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DESCRIPTION)) ?: "",
-            type = TransactionType.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TYPE))),
-            date = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DATE)),
-            createdAt = LocalDateTime.parse(
-                cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATED_AT)),
-                DateTimeFormatter.ISO_LOCAL_DATE_TIME
-            )
-        )
-    }
 }

@@ -5,20 +5,20 @@ import br.com.example.financialflow.data.model.Transaction
 import br.com.example.financialflow.data.model.TransactionType
 import java.time.LocalDateTime
 
-class TransactionRepository(private val database: AppDatabase) {
+class TransactionRepository(private val datasource: TransactionLocalDatasource) {
 
-    constructor(context: Context) : this(AppDatabase.getInstance(context))
+    constructor(context: Context) : this(TransactionLocalDatasource(context))
 
     fun addTransaction(transaction: Transaction): Long {
-        return database.insertTransaction(transaction)
+        return datasource.insertTransaction(transaction)
     }
 
     fun getAllTransactions(): List<Transaction> {
-        return database.getAllTransactions()
+        return datasource.getAllTransactions()
     }
 
     fun getBalance(): Pair<Double, Double> {
-        return database.getBalance()
+        return datasource.getBalance()
     }
 
     fun getNetBalance(): Double {
