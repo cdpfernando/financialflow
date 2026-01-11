@@ -18,11 +18,10 @@ data class TransactionScreenState(
     val selectedType: TransactionType = TransactionType.DEBIT,
     val isTransactionSaved: Boolean = false
 )
-
-
-class TransactionViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = TransactionRepository(application)
+class TransactionViewModel(
+    application: Application,
+    private val repository: TransactionRepository = TransactionRepository(application)
+) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(TransactionScreenState())
     val uiState: StateFlow<TransactionScreenState> = _uiState.asStateFlow()

@@ -43,7 +43,7 @@ class TransactionLocalDatasource(private val database: AppDatabase) {
 
         val transactions = mutableListOf<Transaction>()
         while (cursor.moveToNext()) {
-            transactions.add(cursorToTransaction(cursor))
+            transactions.add(cursor.toTransaction())
         }
         cursor.close()
         return transactions
@@ -73,18 +73,18 @@ class TransactionLocalDatasource(private val database: AppDatabase) {
         return Pair(credits, debits)
     }
 
-    private fun cursorToTransaction(cursor: Cursor): Transaction {
-        return Transaction(
-            id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID)),
-            amount = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_AMOUNT)),
-            description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DESCRIPTION)) ?: "",
-            type = TransactionType.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TYPE))),
-            date = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DATE)),
-            createdAt = LocalDateTime.parse(
-                cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATED_AT)),
-                DateTimeFormatter.ISO_LOCAL_DATE_TIME
-            )
-        )
-    }
+}
 
+private fun Cursor.toTransaction(): Transaction {
+    return Transaction(
+        id = getLong(getColumnIndexOrThrow(COLUMN_ID)),
+        amount = getDouble(getColumnIndexOrThrow(COLUMN_AMOUNT)),
+        description = getString(getColumnIndexOrThrow(COLUMN_DESCRIPTION)) ?: "",
+        type = TransactionType.valueOf(getString(getColumnIndexOrThrow(COLUMN_TYPE))),
+        date = getString(getColumnIndexOrThrow(COLUMN_DATE)),
+        createdAt = LocalDateTime.parse(
+            getString(getColumnIndexOrThrow(COLUMN_CREATED_AT)),
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        )
+    )
 }
