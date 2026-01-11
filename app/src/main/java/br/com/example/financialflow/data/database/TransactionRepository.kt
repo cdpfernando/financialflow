@@ -1,28 +1,24 @@
 package br.com.example.financialflow.data.database
 
 import android.content.Context
-import br.com.example.financialflow.data.model.CreditDetail
-import br.com.example.financialflow.data.model.DebitDetail
 import br.com.example.financialflow.data.model.Transaction
 import br.com.example.financialflow.data.model.TransactionType
+import java.time.LocalDateTime
 
-class TransactionRepository(context : Context) {
-    private val database: AppDatabase = AppDatabase.getInstance(context = context)
+class TransactionRepository(private val datasource: TransactionLocalDatasource) {
+
+    constructor(context: Context) : this(TransactionLocalDatasource(context))
+
     fun addTransaction(transaction: Transaction): Long {
-        return database.insertTransaction(transaction)
+        return datasource.insertTransaction(transaction)
     }
+
     fun getAllTransactions(): List<Transaction> {
-        return database.getAllTransactions()
+        return datasource.getAllTransactions()
     }
+
     fun getBalance(): Pair<Double, Double> {
-        val transactions = getAllTransactions()
-        val credits = transactions
-            .filter { it.type == TransactionType.CREDIT }
-            .sumOf { it.amount }
-        val debits = transactions
-            .filter { it.type == TransactionType.DEBIT }
-            .sumOf { it.amount }
-        return Pair(credits, debits)
+        return datasource.getBalance()
     }
 
     fun getNetBalance(): Double {
@@ -30,32 +26,19 @@ class TransactionRepository(context : Context) {
         return credits - debits
     }
 
-    fun addCreditTransaction(
+    fun addTransaction(
         amount: Double,
         description: String,
-        creditDetail: CreditDetail
+        date: String,
+        type: TransactionType,
+        createdAt: LocalDateTime = LocalDateTime.now()
     ): Long {
         val transaction = Transaction(
             amount = amount,
             description = description,
-            type = TransactionType.CREDIT,
-            creditDetail = creditDetail,
-            debitDetail = null
-        )
-        return addTransaction(transaction)
-    }
-
-    fun addDebitTransaction(
-        amount: Double,
-        description: String,
-        debitDetail: DebitDetail
-    ): Long {
-        val transaction = Transaction(
-            amount = amount,
-            description = description,
-            type = TransactionType.DEBIT,
-            creditDetail = null,
-            debitDetail = debitDetail
+            type = type,
+            date = date,
+            createdAt = createdAt
         )
         return addTransaction(transaction)
     }
