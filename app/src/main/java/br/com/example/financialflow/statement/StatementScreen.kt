@@ -13,6 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,13 +35,10 @@ import java.time.LocalDateTime
 @Composable
 fun StatementScreen(
     modifier: Modifier = Modifier,
-    repository: TransactionRepository,
-    viewModel: StatementViewModel = viewModel()
+    viewModel: StatementViewModel,
+    onNavigateBack: () -> Unit
 ) {
-    val (totalCredits, totalDebits) = remember { repository.getBalance() }
-    val netBalance = remember { repository.getNetBalance() }
-    val transactions = remember { repository.getAllTransactions() }
-
+    val uiState by viewModel.uiState.collectAsState()
 
     Column(
         modifier = modifier.padding(16.dp).fillMaxSize()
@@ -62,7 +61,7 @@ fun StatementScreen(
                 text = "Entradas"
             )
             Text(
-                text = "R$ ${"%.2f".format(totalCredits)}"
+                text = "R$ ${"%.2f".format(uiState.totalCredits)}"
             )
         }
 
@@ -78,7 +77,7 @@ fun StatementScreen(
                 text = "Saídas"
             )
             Text(
-                text = "R$ ${"%.2f".format(totalDebits)}",
+                text = "R$ ${"%.2f".format(uiState.totalDebits)}",
                 color = Color.Red
             )
         }
@@ -95,8 +94,8 @@ fun StatementScreen(
                 text = "Saldo"
             )
             Text(
-                text = "R$ ${"%.2f".format(netBalance)}",
-                color = if (netBalance >= 0) Color(0xFF008000) else Color.Red
+                text = "R$ ${"%.2f".format(uiState.netBalance)}",
+                color = if (uiState.netBalance >= 0) Color(0xFF008000) else Color.Red
             )
         }
 
@@ -114,7 +113,7 @@ fun StatementScreen(
 
         LazyColumn(
         ) {
-            items(transactions) { transaction ->
+            items(uiState.transactions) { transaction ->
                 TransactionItem(transaction = transaction)
                 Divider(color = Color.LightGray, thickness = 0.5.dp)
             }

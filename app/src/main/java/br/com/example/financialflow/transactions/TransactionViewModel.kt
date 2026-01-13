@@ -16,7 +16,8 @@ data class TransactionScreenState(
     val description: String = "",
     val date: String = "",
     val selectedType: TransactionType = TransactionType.DEBIT,
-    val isTransactionSaved: Boolean = false
+    val isTransactionSaved: Boolean = false,
+    val netBalance: Double = 0.0
 )
 class TransactionViewModel(
     application: Application,
@@ -64,6 +65,13 @@ class TransactionViewModel(
 
         fun onTransactionSavedHandled() {
             _uiState.update { it.copy(isTransactionSaved = false) }
+        }
+    }
+
+    fun getNetBalance(){
+        viewModelScope.launch {
+            val netBalance = repository.getNetBalance()
+            _uiState.update { it.copy(netBalance = netBalance) }
         }
     }
 }
