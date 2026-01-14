@@ -1,7 +1,6 @@
 package br.com.example.financialflow
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,88 +8,50 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import br.com.example.financialflow.data.database.TransactionRepository
-import br.com.example.financialflow.data.model.Transaction
-import br.com.example.financialflow.data.model.TransactionType
 import br.com.example.financialflow.statement.StatementScreen
-import br.com.example.financialflow.statement.TransactionItem
 import br.com.example.financialflow.transactions.TransactionScreen
 import br.com.example.financialflow.ui.theme.FinancialFlowTheme
-import br.com.example.financialflow.transactions.TransactionViewModel
-import java.time.LocalDateTime
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        val repository = TransactionRepository(this)
-
+        //TODO: separar em classe exclusiva de navegacao
         setContent {
-
             FinancialFlowTheme {
-
                 val navController = rememberNavController()
 
-
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
                     NavHost(
                         navController = navController,
-                        startDestination = "home",
+                        startDestination = "transaction",
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable(
-                            route = "home",
-                            exitTransition = {
-                                slideOutHorizontally(targetOffsetX = { -it }) + fadeOut()
-                            },
-                            popEnterTransition = {
-                                slideInHorizontally(initialOffsetX = { -it }) + fadeIn()
-                            }
+                            route = "transaction",
+                            exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() },
+                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) + fadeIn() }
                         ) {
                             TransactionScreen(
                                 onNavigateToStatement = {
                                     navController.navigate("statement")
-                                }, modifier = Modifier.padding(16.dp),
-                                repository = repository
+                                }
                             )
                         }
 
                         composable(
                             route = "statement",
-                            enterTransition = {
-                                slideInHorizontally(initialOffsetX = { it }) + fadeIn()
-                            },
-                            popExitTransition = {
-                                slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
-                            }
+                            enterTransition = { slideInHorizontally(initialOffsetX = { it }) + fadeIn() },
+                            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) + fadeOut() }
                         ) {
-                            StatementScreen(
-                                modifier = Modifier,
-                                repository = repository
-                            )
+                            StatementScreen()
                         }
                     }
                 }
