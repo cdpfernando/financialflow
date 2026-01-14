@@ -5,11 +5,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.example.financialflow.data.database.TransactionRepository
 import br.com.example.financialflow.data.model.TransactionType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class TransactionScreenState(
     val amount: String = "",
@@ -18,11 +20,13 @@ data class TransactionScreenState(
     val selectedType: TransactionType = TransactionType.DEBIT,
     val isTransactionSaved: Boolean = false
 )
+
 class TransactionViewModel(
-    application: Application,
-    private val repository: TransactionRepository = TransactionRepository(application)
+    application: Application
 ) : AndroidViewModel(application) {
 
+    //TODO: Adicionar container de DI
+    private val repository: TransactionRepository = TransactionRepository(application)
     private val _uiState = MutableStateFlow(TransactionScreenState())
     val uiState: StateFlow<TransactionScreenState> = _uiState.asStateFlow()
 
@@ -42,28 +46,37 @@ class TransactionViewModel(
         _uiState.update { it.copy(selectedType = type) }
     }
 
+    fun onTransactionSavedHandled() {
+        _uiState.update { it.copy(isTransactionSaved = false) }
+    }
+
     fun addTransaction() {
         viewModelScope.launch {
             val amountValue = _uiState.value.amount.toDoubleOrNull() ?: 0.0
-
-            repository.addTransaction(
-                amount = amountValue,
-                description = _uiState.value.description,
-                date = _uiState.value.date,
-                type = _uiState.value.selectedType
-            )
-            _uiState.update {
-                it.copy(
-                    amount = "",
-                    description = "",
-                    date = "",
-                    isTransactionSaved = true
-                )
+            if (amountValue > 0) {
+                withContext(Dispatchers.IO) {
+                    repository.addTransaction(
+                        amount = amountValue,
+                        description = _uiState.value.description,
+                        date = _uiState.value.date,
+                        type = _uiState.value.selectedType
+                    )
+                }
+                _uiState.update {
+                    it.copy(
+                        amount = "",
+                        description = "",
+                        date = "",
+                        isTransactionSaved = true
+                    )
+                }
             }
         }
+    }
 
-        fun onTransactionSavedHandled() {
-            _uiState.update { it.copy(isTransactionSaved = false) }
+    suspend fun getNetBalance(): Double {
+        return withContext(Dispatchers.IO) {
+            repository.getNetBalance()
         }
     }
 }

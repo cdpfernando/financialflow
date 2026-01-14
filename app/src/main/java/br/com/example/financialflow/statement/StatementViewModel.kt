@@ -19,11 +19,9 @@ data class StatementState(
     val isEmpty: Boolean = false
 )
 
-class StatementViewModel(
-    application: Application,
-    private val repository: TransactionRepository = TransactionRepository(application)
-) : AndroidViewModel(application) {
+class StatementViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val repository: TransactionRepository = TransactionRepository(application)
 
     private val _uiState = MutableStateFlow(StatementState())
     val uiState: StateFlow<StatementState> = _uiState.asStateFlow()

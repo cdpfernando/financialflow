@@ -13,7 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,28 +22,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import br.com.example.financialflow.data.database.TransactionRepository
 import br.com.example.financialflow.data.model.Transaction
 import br.com.example.financialflow.data.model.TransactionType
-import br.com.example.financialflow.transactions.TransactionViewModel
 import br.com.example.financialflow.ui.theme.FinancialFlowTheme
 import java.time.LocalDateTime
-
 
 @Composable
 fun StatementScreen(
     modifier: Modifier = Modifier,
-    repository: TransactionRepository,
     viewModel: StatementViewModel = viewModel()
 ) {
-    val (totalCredits, totalDebits) = remember { repository.getBalance() }
-    val netBalance = remember { repository.getNetBalance() }
-    val transactions = remember { repository.getAllTransactions() }
+    LaunchedEffect(Unit) {
+        viewModel.refreshStatement()
+    }
 
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    StatementContent(
+        modifier = modifier,
+        state = uiState
+    )
+}
+
+@Composable
+fun StatementContent(
+    modifier: Modifier = Modifier,
+    state: StatementState
+) {
     Column(
-        modifier = modifier.padding(16.dp).fillMaxSize()
+        modifier = modifier
+            .padding(16.dp)
+            .fillMaxSize()
     ) {
         Text(
             text = "Resumo Financeiro",
@@ -50,9 +62,7 @@ fun StatementScreen(
             fontSize = 24.sp
         )
 
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
+        Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -62,13 +72,11 @@ fun StatementScreen(
                 text = "Entradas"
             )
             Text(
-                text = "R$ ${"%.2f".format(totalCredits)}"
+                text = "R$ ${"%.2f".format(state.totalCredits)}"
             )
         }
 
-        Spacer(
-            modifier = Modifier.height(4.dp)
-        )
+        Spacer(modifier = Modifier.height(4.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -78,43 +86,33 @@ fun StatementScreen(
                 text = "Saídas"
             )
             Text(
-                text = "R$ ${"%.2f".format(totalDebits)}",
+                text = "R$ ${"%.2f".format(state.totalDebits)}",
                 color = Color.Red
             )
         }
 
-        Spacer(
-            modifier = Modifier.height(4.dp)
-        )
+        Spacer(modifier = Modifier.height(4.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Text(text = "Saldo")
             Text(
-                text = "Saldo"
-            )
-            Text(
-                text = "R$ ${"%.2f".format(netBalance)}",
-                color = if (netBalance >= 0) Color(0xFF008000) else Color.Red
+                text = "R$ ${"%.2f".format(state.netBalance)}",
+                color = if (state.netBalance >= 0) Color(0xFF008000) else Color.Red,
+                fontWeight = FontWeight.Bold
             )
         }
 
-        Spacer(
-            modifier = Modifier.height(16.dp)
-        )
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Histórico de Transações"
-        )
+        Text(text = "Histórico de Transações")
 
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
+        Spacer(modifier = Modifier.height(8.dp))
 
-        LazyColumn(
-        ) {
-            items(transactions) { transaction ->
+        LazyColumn {
+            items(state.transactions) { transaction ->
                 TransactionItem(transaction = transaction)
                 Divider(color = Color.LightGray, thickness = 0.5.dp)
             }
@@ -123,7 +121,7 @@ fun StatementScreen(
 }
 
 @Composable
-fun TransactionItem(transaction: br.com.example.financialflow.data.model.Transaction) {
+fun TransactionItem(transaction: Transaction) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -135,21 +133,10 @@ fun TransactionItem(transaction: br.com.example.financialflow.data.model.Transac
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            val type = when (transaction.type) {
-                TransactionType.CREDIT -> "C"
-                TransactionType.DEBIT -> "D"
-            }
-            Text(
-                text = type,
-                fontSize = 12.sp,
-                color = if (transaction.type == TransactionType.CREDIT) Color(0xFF008000) else Color.Red,
-            )
-
             Text(
                 text = transaction.description,
                 fontWeight = FontWeight.Bold
             )
-
             Text(
                 text = transaction.date,
                 fontSize = 12.sp,
@@ -157,15 +144,60 @@ fun TransactionItem(transaction: br.com.example.financialflow.data.model.Transac
             )
         }
 
+        val amountColor =
+            if (transaction.type == TransactionType.CREDIT) Color(0xFF008000) else Color.Red
+        val amountPrefix = if (transaction.type == TransactionType.CREDIT) "+ " else "- "
+
         Text(
-            text = "R$ ${"%.2f".format(transaction.amount)}",
-            color = if (transaction.type == TransactionType.CREDIT) Color(0xFF008000) else Color.Red,
+            text = "$amountPrefix R$ ${String.format("%.2f", transaction.amount)}",
+            color = amountColor,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 8.dp)
         )
     }
 }
 
+@Preview(showBackground = true, name = "Statement Screen with Data")
+@Composable
+fun StatementContentPreview() {
+    FinancialFlowTheme {
+        val previewState = StatementState(
+            transactions = listOf(
+                Transaction(
+                    1,
+                    1500.0,
+                    "Salário",
+                    TransactionType.CREDIT,
+                    "01/09/2024",
+                    LocalDateTime.now()
+                ),
+                Transaction(
+                    2,
+                    80.0,
+                    "Supermercado",
+                    TransactionType.DEBIT,
+                    "02/09/2024",
+                    LocalDateTime.now()
+                ),
+                Transaction(
+                    3,
+                    120.0,
+                    "Restaurante",
+                    TransactionType.DEBIT,
+                    "02/09/2024",
+                    LocalDateTime.now()
+                )
+            ),
+            totalCredits = 1500.0,
+            totalDebits = 200.0,
+            netBalance = 1300.0
+        )
+        StatementContent(
+            state = previewState,
+            modifier = Modifier
+        )
+    }
+}
 
 @Preview(showBackground = true, name = "Transaction Item - Credit")
 @Composable
@@ -175,7 +207,7 @@ fun TransactionItemCreditPreview() {
             transaction = Transaction(
                 id = 1,
                 amount = 1200.50,
-                description = "Salary",
+                description = "Salário",
                 type = TransactionType.CREDIT,
                 date = "01/09/2024",
                 createdAt = LocalDateTime.now()
@@ -192,7 +224,7 @@ fun TransactionItemDebitPreview() {
             transaction = Transaction(
                 id = 2,
                 amount = 75.25,
-                description = "Groceries",
+                description = "Compras",
                 type = TransactionType.DEBIT,
                 date = "02/09/2024",
                 createdAt = LocalDateTime.now()
