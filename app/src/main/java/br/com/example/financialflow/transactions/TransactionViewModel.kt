@@ -24,24 +24,30 @@ data class TransactionScreenState(
     val selectedType: TransactionType = TransactionType.DEBIT,
     val isTransactionSaved: Boolean = false,
     val selectedDateMillis: Long? = null,
-    val isDatePickerVisible: Boolean = false
+    val isDatePickerVisible: Boolean = false,
+    val isSaveEnabled: Boolean = false
 )
 
 class TransactionViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    //TODO: Adicionar container de DI
     private val repository: TransactionRepository = TransactionRepository(application)
     private val _uiState = MutableStateFlow(TransactionScreenState())
     val uiState: StateFlow<TransactionScreenState> = _uiState.asStateFlow()
 
+    init {
+        validateForm()
+    }
+
     fun onAmountChange(amount: String) {
         _uiState.update { it.copy(amount = amount) }
+        validateForm()
     }
 
     fun onDescriptionChange(description: String) {
         _uiState.update { it.copy(description = description) }
+        validateForm()
     }
 
     fun onDateClick() {
@@ -63,6 +69,7 @@ class TransactionViewModel(
                 date = formattedDate
             )
         }
+        validateForm()
     }
 
     fun onDismissDatePicker() {
@@ -71,6 +78,7 @@ class TransactionViewModel(
 
     fun onTypeChange(type: TransactionType) {
         _uiState.update { it.copy(selectedType = type) }
+        validateForm()
     }
 
     fun onTransactionSavedHandled() {
@@ -78,25 +86,24 @@ class TransactionViewModel(
     }
 
     fun addTransaction() {
+        if (!_uiState.value.isSaveEnabled) return
+
         viewModelScope.launch {
-            val amountValue = _uiState.value.amount.toDoubleOrNull() ?: 0.0
-            if (amountValue > 0) {
-                withContext(Dispatchers.IO) {
-                    repository.addTransaction(
-                        amount = amountValue,
-                        description = _uiState.value.description,
-                        date = _uiState.value.date,
-                        type = _uiState.value.selectedType
-                    )
-                }
-                _uiState.update {
-                    it.copy(
-                        amount = "",
-                        description = "",
-                        date = "",
-                        isTransactionSaved = true
-                    )
-                }
+            withContext(Dispatchers.IO) {
+                repository.addTransaction(
+                    amount = _uiState.value.amount.toDouble(),
+                    description = _uiState.value.description,
+                    date = _uiState.value.date,
+                    type = _uiState.value.selectedType
+                )
+            }
+            _uiState.update {
+                it.copy(
+                    amount = "",
+                    description = "",
+                    date = "",
+                    isTransactionSaved = true
+                )
             }
         }
     }
@@ -105,5 +112,14 @@ class TransactionViewModel(
         return withContext(Dispatchers.IO) {
             repository.getNetBalance()
         }
+    }
+
+    private fun validateForm() {
+        val state = _uiState.value
+        val isAmountValid = (state.amount.toDoubleOrNull() ?: 0.0) > 0
+        val isDescriptionValid = state.description.isNotBlank()
+        val isDateValid = state.date.isNotBlank()
+
+        _uiState.update { it.copy(isSaveEnabled = isAmountValid && isDescriptionValid && isDateValid) }
     }
 }

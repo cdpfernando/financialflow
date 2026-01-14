@@ -146,6 +146,7 @@ fun TransactionScreenContent(
 
         Button(
             onClick = onAddTransaction,
+            enabled = uiState.isSaveEnabled,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Salvar Transação")
@@ -174,35 +175,28 @@ fun TransactionScreenContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePickerField(
-    label: String = "Data",
+    label: String,
     selectedDateMillis: Long?,
     isDatePickerVisible: Boolean,
     onDateFieldClick: () -> Unit,
     onDateSelected: (Long?) -> Unit,
-    onDismissDatePicker: () -> Unit
+    onDismissDatePicker: () -> Unit,
 ) {
     val dateFormatter = remember {
         SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
             timeZone = TimeZone.getTimeZone("UTC")
         }
     }
-
     val text = remember(selectedDateMillis) {
         selectedDateMillis?.let { dateFormatter.format(Date(it)) } ?: ""
     }
 
     if (isDatePickerVisible) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDateMillis
-        )
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
         DatePickerDialog(
             onDismissRequest = onDismissDatePicker,
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDateSelected(datePickerState.selectedDateMillis)
-                    }
-                ) {
+                TextButton(onClick = { onDateSelected(datePickerState.selectedDateMillis) }) {
                     Text("OK")
                 }
             },
@@ -219,12 +213,11 @@ fun DatePickerField(
     Box {
         TextField(
             value = text,
-            onValueChange = { },
+            onValueChange = {},
             label = { Text(label) },
             modifier = Modifier.fillMaxWidth(),
             readOnly = true
         )
-
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -234,7 +227,6 @@ fun DatePickerField(
                 ) { onDateFieldClick() }
         )
     }
-
 }
 
 @Preview(showBackground = true, name = "Transaction Screen")
@@ -246,7 +238,8 @@ fun TransactionScreenPreview() {
             uiState = TransactionScreenState(
                 amount = "123.45",
                 description = "Salario",
-                date = "10/10/2024"
+                date = "10/10/2024",
+                isSaveEnabled = true
             ),
             onAmountChange = {},
             onDescriptionChange = {},
