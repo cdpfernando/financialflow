@@ -12,13 +12,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 data class TransactionScreenState(
     val amount: String = "",
     val description: String = "",
     val date: String = "",
     val selectedType: TransactionType = TransactionType.DEBIT,
-    val isTransactionSaved: Boolean = false
+    val isTransactionSaved: Boolean = false,
+    val selectedDateMillis: Long? = null,
+    val isDatePickerVisible: Boolean = false
 )
 
 class TransactionViewModel(
@@ -38,8 +44,29 @@ class TransactionViewModel(
         _uiState.update { it.copy(description = description) }
     }
 
-    fun onDateChange(date: String) {
-        _uiState.update { it.copy(date = date) }
+    fun onDateClick() {
+        _uiState.update { it.copy(isDatePickerVisible = true) }
+    }
+
+    fun onDateSelected(millis: Long?) {
+        _uiState.update { currentState ->
+            val formattedDate = if (millis != null) {
+                val instant = Instant.ofEpochMilli(millis)
+                val date = LocalDateTime.ofInstant(instant, ZoneOffset.UTC).toLocalDate()
+                date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            } else {
+                currentState.date
+            }
+            currentState.copy(
+                selectedDateMillis = millis,
+                isDatePickerVisible = false,
+                date = formattedDate
+            )
+        }
+    }
+
+    fun onDismissDatePicker() {
+        _uiState.update { it.copy(isDatePickerVisible = false) }
     }
 
     fun onTypeChange(type: TransactionType) {
