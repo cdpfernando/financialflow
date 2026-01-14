@@ -97,14 +97,20 @@ class TransactionViewModel(
                     type = _uiState.value.selectedType
                 )
             }
-            _uiState.update {
-                it.copy(
-                    amount = "",
-                    description = "",
-                    date = "",
-                    isTransactionSaved = true
-                )
-            }
+            resetForm()
+        }
+    }
+
+    private fun resetForm() {
+        _uiState.update {
+            it.copy(
+                amount = "",
+                description = "",
+                date = "",
+                isTransactionSaved = true,
+                selectedDateMillis = null,
+                isSaveEnabled = false
+            )
         }
     }
 
