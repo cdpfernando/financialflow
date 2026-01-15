@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
@@ -43,7 +43,8 @@ import java.time.LocalDateTime
 @Composable
 fun StatementScreen(
     modifier: Modifier = Modifier,
-    viewModel: StatementViewModel = viewModel()
+    viewModel: StatementViewModel = viewModel(),
+    onNavigateBack: () -> Unit
 ) {
     LaunchedEffect(Unit) {
         viewModel.refreshStatement()
@@ -56,7 +57,8 @@ fun StatementScreen(
         state = uiState,
         onDeleteRequest = viewModel::onDeleteRequest,
         onDeleteConfirm = viewModel::onDeleteConfirm,
-        onDeleteCancel = viewModel::onDeleteCancel
+        onDeleteCancel = viewModel::onDeleteCancel,
+        onNavigateBack = onNavigateBack
     )
 }
 
@@ -66,7 +68,8 @@ fun StatementContent(
     state: StatementState,
     onDeleteRequest: (Transaction) -> Unit,
     onDeleteConfirm: () -> Unit,
-    onDeleteCancel: () -> Unit
+    onDeleteCancel: () -> Unit,
+    onNavigateBack: () -> Unit
 ) {
 
     if (state.transactionToDelete != null) {
@@ -96,118 +99,135 @@ fun StatementContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(0.dp, 8.dp, 0.dp, 8.dp)
-                .height(40.dp)
+                .height(48.dp)
                 .background(color = Color(0xFF4C5E8B))
-                .wrapContentSize(align = Alignment.Center)
         ) {
+            IconButton(onClick = onNavigateBack, modifier = Modifier.align(Alignment.CenterStart)) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.voltar),
+                    tint = Color.White
+                )
+            }
             Text(
                 text = stringResource(R.string.text_resumo_financeiro),
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-                color = Color.White
+                fontSize = 20.sp,
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center)
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(0.dp, 8.dp, 0.dp, 8.dp)
-                .background(color = Color(0xFFACBCE5))
-        ) {
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+        if (state.isEmpty) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = stringResource(R.string.text_entradas),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(8.dp, 8.dp, 0.dp, 0.dp)
-                )
-                Text(
-                    text = stringResource(R.string.text_rs, "%.2f".format(state.totalCredits)),
-                    modifier = Modifier.padding(0.dp, 8.dp, 8.dp, 0.dp)
+                    text = stringResource(R.string.text_nenhuma_transacao_encontrada),
+                    fontSize = 18.sp,
+                    color = Color.Gray
                 )
             }
+        } else {
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Spacer(modifier = Modifier.height(4.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(0.dp, 8.dp, 0.dp, 8.dp)
+                        .background(color = Color(0xFFACBCE5))
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.text_entradas),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(8.dp, 8.dp, 0.dp, 0.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.text_rs, "%.2f".format(state.totalCredits)),
+                            modifier = Modifier.padding(0.dp, 8.dp, 8.dp, 0.dp)
+                        )
+                    }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.text_saidas),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(8.dp, 0.dp, 0.dp, 0.dp)
-                )
-                Text(
-                    text = stringResource(R.string.text_rs, "%.2f".format(state.totalDebits)),
-                    color = Color.Red,
-                    modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp)
-                )
-            }
+                    Spacer(modifier = Modifier.height(4.dp))
 
-            Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.text_saidas),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(8.dp, 0.dp, 0.dp, 0.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.text_rs, "%.2f".format(state.totalDebits)),
+                            color = Color.Red,
+                            modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp)
+                        )
+                    }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.text_saldo),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(8.dp, 0.dp, 0.dp, 8.dp)
-                )
-                Text(
-                    text = stringResource(R.string.text_rs, "%.2f".format(state.netBalance)),
-                    color = if (state.netBalance >= 0) Color(0xFF008000) else Color.Red,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 8.dp)
-                )
-            }
-        }
+                    Spacer(modifier = Modifier.height(4.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.text_saldo),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(8.dp, 0.dp, 0.dp, 8.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.text_rs, "%.2f".format(state.netBalance)),
+                            color = if (state.netBalance >= 0) Color(0xFF008000) else Color.Red,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 8.dp)
+                        )
+                    }
+                }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(0.dp, 8.dp, 0.dp, 8.dp)
-                .height(30.dp)
-                .background(color = Color(0xFF4C5E8B))
-                .wrapContentSize(align = Alignment.Center)
-        ) {
-            Text(
-                text = stringResource(R.string.text_historico_de_transacoes),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = Color.White
-            )
-        }
+                Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(0.dp, 8.dp, 0.dp, 8.dp)
+                        .height(30.dp)
+                        .background(color = Color(0xFF4C5E8B))
+                ) {
+                    Text(
+                        text = stringResource(R.string.text_historico_de_transacoes),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
 
-        LazyColumn {
-            items(state.transactions, key = { it.id }) { transaction ->
-                TransactionItem(
-                    transaction = transaction,
-                    onDismiss = { onDeleteRequest(transaction) }
-                )
-                Divider(color = Color.LightGray, thickness = 0.5.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                LazyColumn {
+                    items(state.transactions, key = { it.id }) { transaction ->
+                        TransactionItem(
+                            transaction = transaction,
+                            onDismiss = { onDeleteRequest(transaction) }
+                        )
+                        Divider(color = Color.LightGray, thickness = 0.5.dp)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun TransactionItem(
-    transaction: Transaction,
-    onDismiss: () -> Unit
-) {
+fun TransactionItem(transaction: Transaction, onDismiss: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -253,6 +273,21 @@ fun TransactionItem(
     }
 }
 
+@Preview(showBackground = true, name = "Statement Screen Empty")
+@Composable
+fun StatementContentEmptyPreview() {
+    FinancialFlowTheme {
+        StatementContent(
+            state = StatementState(isEmpty = true),
+            modifier = Modifier,
+            onDeleteRequest = {},
+            onDeleteConfirm = {},
+            onDeleteCancel = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
 @Preview(showBackground = true, name = "Statement Screen with Dialog")
 @Composable
 fun StatementContentWithDialogPreview() {
@@ -272,7 +307,8 @@ fun StatementContentWithDialogPreview() {
             modifier = Modifier,
             onDeleteRequest = {},
             onDeleteConfirm = {},
-            onDeleteCancel = {}
+            onDeleteCancel = {},
+            onNavigateBack = {}
         )
     }
 }
@@ -296,7 +332,8 @@ fun StatementContentNoDialogPreview() {
             modifier = Modifier,
             onDeleteRequest = {},
             onDeleteConfirm = {},
-            onDeleteCancel = {}
+            onDeleteCancel = {},
+            onNavigateBack = {}
         )
     }
 }

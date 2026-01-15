@@ -18,7 +18,8 @@ data class StatementState(
     val totalCredits: Double = 0.0,
     val totalDebits: Double = 0.0,
     val netBalance: Double = 0.0,
-    val transactionToDelete: Transaction? = null // Novo estado para controlar o diálogo
+    val transactionToDelete: Transaction? = null,
+    val isEmpty: Boolean = true
 )
 
 class StatementViewModel(application: Application) : AndroidViewModel(application) {
@@ -28,48 +29,39 @@ class StatementViewModel(application: Application) : AndroidViewModel(applicatio
     private val _uiState = MutableStateFlow(StatementState())
     val uiState: StateFlow<StatementState> = _uiState.asStateFlow()
 
-    fun refreshStatement() {
-        viewModelScope.launch {
-            val transactions = withContext(Dispatchers.IO) { repository.getAllTransactions() }
-            val (credits, debits) = withContext(Dispatchers.IO) { repository.getBalance() }
-            _uiState.update {
-                it.copy(
-                    transactions = transactions,
-                    totalCredits = credits,
-                    totalDebits = debits,
-                    netBalance = credits - debits
-                )
-            }
-        }
-    }
-
-    /**
-     * Inicia o processo de exclusão, definindo qual transação está "em risco".
-     * Isso fará com que a UI mostre o diálogo de confirmação.
-     */
     fun onDeleteRequest(transaction: Transaction) {
         _uiState.update { it.copy(transactionToDelete = transaction) }
     }
 
-    /**
-     * Cancela a exclusão e esconde o diálogo.
-     */
     fun onDeleteCancel() {
         _uiState.update { it.copy(transactionToDelete = null) }
     }
 
-    /**
-     * Confirma a exclusão, deleta do banco e atualiza a tela.
-     */
     fun onDeleteConfirm() {
         _uiState.value.transactionToDelete?.let { transaction ->
             viewModelScope.launch {
                 withContext(Dispatchers.IO) {
                     repository.deleteTransaction(transaction)
                 }
-                // Esconde o diálogo e recarrega os dados da fonte da verdade (o banco)
                 _uiState.update { it.copy(transactionToDelete = null) }
                 refreshStatement()
+            }
+        }
+    }
+
+    fun refreshStatement() {
+        viewModelScope.launch {
+            val transactions = withContext(Dispatchers.IO) { repository.getAllTransactions() }
+            val (credits, debits) = withContext(Dispatchers.IO) { repository.getBalance() }
+
+            _uiState.update { currentState ->
+                currentState.copy(
+                    transactions = transactions,
+                    totalCredits = credits,
+                    totalDebits = debits,
+                    netBalance = credits - debits,
+                    isEmpty = transactions.isEmpty()
+                )
             }
         }
     }

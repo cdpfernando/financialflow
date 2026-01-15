@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        //TODO: separar em classe exclusiva de navegacao
+
         setContent {
             FinancialFlowTheme {
                 val navController = rememberNavController()
@@ -51,7 +51,9 @@ class MainActivity : ComponentActivity() {
                             enterTransition = { slideInHorizontally(initialOffsetX = { it }) + fadeIn() },
                             popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) + fadeOut() }
                         ) {
-                            StatementScreen()
+                            StatementScreen(
+                                onNavigateBack = { navController.popBackStack() }
+                            )
                         }
                     }
                 }

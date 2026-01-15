@@ -25,7 +25,8 @@ data class TransactionScreenState(
     val isTransactionSaved: Boolean = false,
     val selectedDateMillis: Long? = null,
     val isDatePickerVisible: Boolean = false,
-    val isSaveEnabled: Boolean = false
+    val isSaveEnabled: Boolean = false,
+    val netBalanceToShow: Double? = null
 )
 
 class TransactionViewModel(
@@ -33,6 +34,7 @@ class TransactionViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository: TransactionRepository = TransactionRepository(application)
+
     private val _uiState = MutableStateFlow(TransactionScreenState())
     val uiState: StateFlow<TransactionScreenState> = _uiState.asStateFlow()
 
@@ -40,9 +42,13 @@ class TransactionViewModel(
         validateForm()
     }
 
-    fun onAmountChange(amount: String) {
-        _uiState.update { it.copy(amount = amount) }
-        validateForm()
+    fun onAmountChange(input: String) {
+        val amount = input.replace(',', '.')
+        val regex = "^\\d*\\.?\\d{0,2}$".toRegex()
+        if (amount.matches(regex)) {
+            _uiState.update { it.copy(amount = amount) }
+            validateForm()
+        }
     }
 
     fun onDescriptionChange(description: String) {
@@ -78,46 +84,52 @@ class TransactionViewModel(
 
     fun onTypeChange(type: TransactionType) {
         _uiState.update { it.copy(selectedType = type) }
-        validateForm()
     }
 
     fun onTransactionSavedHandled() {
         _uiState.update { it.copy(isTransactionSaved = false) }
+    }
+        fun onCalculateBalance() {
+        viewModelScope.launch {
+            val balance = withContext(Dispatchers.IO) {
+                repository.getNetBalance()
+            }
+            _uiState.update { it.copy(netBalanceToShow = balance) }
+        }
+    }
+
+    fun onDismissBalanceModal() {
+        _uiState.update { it.copy(netBalanceToShow = null) }
     }
 
     fun addTransaction() {
         if (!_uiState.value.isSaveEnabled) return
 
         viewModelScope.launch {
+            val amountValue = _uiState.value.amount.toDoubleOrNull() ?: 0.0
             withContext(Dispatchers.IO) {
                 repository.addTransaction(
-                    amount = _uiState.value.amount.toDouble(),
+                    amount = amountValue,
                     description = _uiState.value.description,
                     date = _uiState.value.date,
                     type = _uiState.value.selectedType
                 )
             }
-            resetForm()
+            resetScreen()
         }
     }
 
-    private fun resetForm() {
+    private fun resetScreen() {
         _uiState.update {
             it.copy(
                 amount = "",
                 description = "",
                 date = "",
-                isTransactionSaved = true,
                 selectedDateMillis = null,
-                isSaveEnabled = false
+                isTransactionSaved = true
             )
         }
-    }
-
-    suspend fun getNetBalance(): Double {
-        return withContext(Dispatchers.IO) {
-            repository.getNetBalance()
-        }
+        validateForm()
     }
 
     private fun validateForm() {
@@ -125,7 +137,6 @@ class TransactionViewModel(
         val isAmountValid = (state.amount.toDoubleOrNull() ?: 0.0) > 0
         val isDescriptionValid = state.description.isNotBlank()
         val isDateValid = state.date.isNotBlank()
-
         _uiState.update { it.copy(isSaveEnabled = isAmountValid && isDescriptionValid && isDateValid) }
     }
 }

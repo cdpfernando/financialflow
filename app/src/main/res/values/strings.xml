@@ -43,5 +43,9 @@
     <string name="button_excluir">Excluir</string>
     <string name="button_cancelar">Cancelar</string>
     <string name="description_excluir_transacao">Excluir transação</string>
+    <string name="text_saldo_total">Saldo Total</string>
+    <string name="text_ok">Ok</string>
+    <string name="voltar">Voltar</string>
+    <string name="text_nenhuma_transacao_encontrada">Adicione uma transação.</string>
 
 </resources>

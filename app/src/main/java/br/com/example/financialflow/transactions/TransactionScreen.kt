@@ -3,7 +3,6 @@ package br.com.example.financialflow.transactions
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,7 +43,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.example.financialflow.R
 import br.com.example.financialflow.data.model.TransactionType
 import br.com.example.financialflow.ui.theme.FinancialFlowTheme
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -57,7 +55,6 @@ fun TransactionScreen(
     onNavigateToStatement: () -> Unit
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState.isTransactionSaved) {
@@ -81,17 +78,8 @@ fun TransactionScreen(
         onTypeChange = viewModel::onTypeChange,
         onAddTransaction = viewModel::addTransaction,
         onNavigateToStatement = onNavigateToStatement,
-        onCalculateBalance = {
-            scope.launch {
-                val total = viewModel.getNetBalance()
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.text_toast_saldo_total_rs, "%.2f".format(total)),
-                    Toast.LENGTH_LONG
-                )
-                    .show()
-            }
-        }
+        onCalculateBalance = viewModel::onCalculateBalance,
+        onDismissBalanceModal = viewModel::onDismissBalanceModal
     )
 }
 
@@ -108,7 +96,21 @@ fun TransactionScreenContent(
     onAddTransaction: () -> Unit,
     onNavigateToStatement: () -> Unit,
     onCalculateBalance: () -> Unit,
+    onDismissBalanceModal: () -> Unit
 ) {
+    uiState.netBalanceToShow?.let { balance ->
+        AlertDialog(
+            onDismissRequest = onDismissBalanceModal,
+            title = { Text(stringResource(R.string.text_saldo_total)) },
+            text = { Text(stringResource(R.string.text_rs, "%.2f".format(balance))) },
+            confirmButton = {
+                TextButton(onClick = onDismissBalanceModal) {
+                    Text(stringResource(R.string.text_ok))
+                }
+            }
+        )
+    }
+
     Column(
         modifier = modifier
     ) {
@@ -166,7 +168,7 @@ fun TransactionScreenContent(
             value = uiState.amount,
             onValueChange = onAmountChange,
             label = { Text(stringResource(R.string.label_valor)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -297,7 +299,8 @@ fun TransactionScreenPreview() {
             onCalculateBalance = {},
             onDateFieldClick = {},
             onDateSelected = {},
-            onDismissDatePicker = {}
+            onDismissDatePicker = {},
+            onDismissBalanceModal = {}
         )
     }
 }
