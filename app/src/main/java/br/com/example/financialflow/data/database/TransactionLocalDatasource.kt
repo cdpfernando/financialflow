@@ -33,6 +33,11 @@ class TransactionLocalDatasource(private val database: AppDatabase) {
         return db.insert(TABLE_TRANSACTIONS, null, values)
     }
 
+    fun deleteTransaction(transactionId: Long) {
+        val db = database.writableDatabase
+        db.delete(TABLE_TRANSACTIONS, "$COLUMN_ID = ?", arrayOf(transactionId.toString()))
+    }
+
     fun getAllTransactions(): List<Transaction> {
         val db = database.readableDatabase
         val cursor = db.query(

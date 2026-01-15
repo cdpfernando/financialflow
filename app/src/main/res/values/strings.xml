@@ -37,4 +37,11 @@
     <string name="plus_signal">"+ "</string>
     <string name="minus_signal">"- "</string>
 
+    <!-- Dialog Strings -->
+    <string name="title_confirmar_exclusao">Confirmar Exclusão</string>
+    <string name="text_confirmar_exclusao">Você tem certeza que deseja excluir esta transação?</string>
+    <string name="button_excluir">Excluir</string>
+    <string name="button_cancelar">Cancelar</string>
+    <string name="description_excluir_transacao">Excluir transação</string>
+
 </resources>

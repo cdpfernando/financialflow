@@ -13,6 +13,10 @@ class TransactionRepository(private val datasource: TransactionLocalDatasource) 
         return datasource.insertTransaction(transaction)
     }
 
+    fun deleteTransaction(transaction: Transaction) {
+        datasource.deleteTransaction(transaction.id)
+    }
+
     fun getAllTransactions(): List<Transaction> {
         return datasource.getAllTransactions()
     }

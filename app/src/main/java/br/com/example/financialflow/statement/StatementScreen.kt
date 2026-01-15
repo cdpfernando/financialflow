@@ -13,8 +13,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,15 +53,40 @@ fun StatementScreen(
 
     StatementContent(
         modifier = modifier,
-        state = uiState
+        state = uiState,
+        onDeleteRequest = viewModel::onDeleteRequest,
+        onDeleteConfirm = viewModel::onDeleteConfirm,
+        onDeleteCancel = viewModel::onDeleteCancel
     )
 }
 
 @Composable
 fun StatementContent(
     modifier: Modifier = Modifier,
-    state: StatementState
+    state: StatementState,
+    onDeleteRequest: (Transaction) -> Unit,
+    onDeleteConfirm: () -> Unit,
+    onDeleteCancel: () -> Unit
 ) {
+
+    if (state.transactionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = onDeleteCancel,
+            title = { Text(stringResource(R.string.title_confirmar_exclusao)) },
+            text = { Text(stringResource(R.string.text_confirmar_exclusao)) },
+            confirmButton = {
+                TextButton(onClick = onDeleteConfirm) {
+                    Text(stringResource(R.string.button_excluir))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDeleteCancel) {
+                    Text(stringResource(R.string.button_cancelar))
+                }
+            }
+        )
+    }
+
     Column(
         modifier = modifier
             .padding(16.dp)
@@ -80,7 +111,7 @@ fun StatementContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Column (
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(0.dp, 8.dp, 0.dp, 8.dp)
@@ -161,8 +192,11 @@ fun StatementContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         LazyColumn {
-            items(state.transactions) { transaction ->
-                TransactionItem(transaction = transaction)
+            items(state.transactions, key = { it.id }) { transaction ->
+                TransactionItem(
+                    transaction = transaction,
+                    onDismiss = { onDeleteRequest(transaction) }
+                )
                 Divider(color = Color.LightGray, thickness = 0.5.dp)
             }
         }
@@ -170,7 +204,10 @@ fun StatementContent(
 }
 
 @Composable
-fun TransactionItem(transaction: Transaction) {
+fun TransactionItem(
+    transaction: Transaction,
+    onDismiss: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -205,47 +242,61 @@ fun TransactionItem(transaction: Transaction) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 8.dp)
         )
+
+        IconButton(onClick = onDismiss) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = stringResource(R.string.text_confirmar_exclusao),
+                tint = Color.Gray
+            )
+        }
     }
 }
 
-@Preview(showBackground = true, name = "Statement Screen with Data")
+@Preview(showBackground = true, name = "Statement Screen with Dialog")
 @Composable
-fun StatementContentPreview() {
+fun StatementContentWithDialogPreview() {
     FinancialFlowTheme {
         val previewState = StatementState(
             transactions = listOf(
-                Transaction(
-                    1,
-                    1500.0,
-                    stringResource(R.string.description_salario),
-                    TransactionType.CREDIT,
-                    "01/09/2024",
-                    LocalDateTime.now()
-                ),
-                Transaction(
-                    2,
-                    80.0,
-                    stringResource(R.string.description_supermercado),
-                    TransactionType.DEBIT,
-                    "02/09/2024",
-                    LocalDateTime.now()
-                ),
-                Transaction(
-                    3,
-                    120.0,
-                    stringResource(R.string.description_restaurante),
-                    TransactionType.DEBIT,
-                    "02/09/2024",
-                    LocalDateTime.now()
-                )
+                Transaction(1, 1500.0, "Salário", TransactionType.CREDIT, "01/09/2024", LocalDateTime.now()),
+                Transaction(2, 80.0, "Supermercado", TransactionType.DEBIT, "02/09/2024", LocalDateTime.now()),
             ),
             totalCredits = 1500.0,
-            totalDebits = 200.0,
-            netBalance = 1300.0
+            totalDebits = 80.0,
+            netBalance = 1420.0,
+            transactionToDelete = Transaction(2, 80.0, "Supermercado", TransactionType.DEBIT, "02/09/2024", LocalDateTime.now())
         )
         StatementContent(
             state = previewState,
-            modifier = Modifier
+            modifier = Modifier,
+            onDeleteRequest = {},
+            onDeleteConfirm = {},
+            onDeleteCancel = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Statement Screen No Dialog")
+@Composable
+fun StatementContentNoDialogPreview() {
+    FinancialFlowTheme {
+        val previewState = StatementState(
+            transactions = listOf(
+                Transaction(1, 1500.0, "Salário", TransactionType.CREDIT, "01/09/2024", LocalDateTime.now()),
+                Transaction(2, 80.0, "Supermercado", TransactionType.DEBIT, "02/09/2024", LocalDateTime.now()),
+            ),
+            totalCredits = 1500.0,
+            totalDebits = 80.0,
+            netBalance = 1420.0,
+            transactionToDelete = null
+        )
+        StatementContent(
+            state = previewState,
+            modifier = Modifier,
+            onDeleteRequest = {},
+            onDeleteConfirm = {},
+            onDeleteCancel = {}
         )
     }
 }
@@ -263,7 +314,7 @@ fun TransactionItemCreditPreview() {
                 date = "01/09/2024",
                 createdAt = LocalDateTime.now()
             )
-        )
+        ) {}
     }
 }
 
@@ -280,6 +331,6 @@ fun TransactionItemDebitPreview() {
                 date = "02/09/2024",
                 createdAt = LocalDateTime.now()
             )
-        )
+        ) {}
     }
 }
