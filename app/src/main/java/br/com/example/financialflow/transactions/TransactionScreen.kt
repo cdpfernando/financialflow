@@ -1,8 +1,11 @@
 package br.com.example.financialflow.transactions
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
@@ -25,13 +29,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.example.financialflow.R
 import br.com.example.financialflow.data.model.TransactionType
 import br.com.example.financialflow.ui.theme.FinancialFlowTheme
 import kotlinx.coroutines.launch
@@ -52,7 +62,10 @@ fun TransactionScreen(
 
     LaunchedEffect(uiState.isTransactionSaved) {
         if (uiState.isTransactionSaved) {
-            Toast.makeText(context, "Transação salva!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context,
+                context.getString(R.string.text_toast_transacao_salva), Toast.LENGTH_SHORT
+            ).show()
             viewModel.onTransactionSavedHandled()
         }
     }
@@ -71,7 +84,11 @@ fun TransactionScreen(
         onCalculateBalance = {
             scope.launch {
                 val total = viewModel.getNetBalance()
-                Toast.makeText(context, "Saldo total: R$${"%.2f".format(total)}", Toast.LENGTH_LONG)
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.text_toast_saldo_total_rs, "%.2f".format(total)),
+                    Toast.LENGTH_LONG
+                )
                     .show()
             }
         }
@@ -95,22 +112,52 @@ fun TransactionScreenContent(
     Column(
         modifier = modifier
     ) {
-        Text(text = "Cadastro de Transação")
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(0.dp, 8.dp, 0.dp, 8.dp)
+                .height(40.dp)
+                .background(color = Color(0xFF4C5E8B))
+                .wrapContentSize(align = Alignment.Center)
+        ) {
+            Text(
+                text = stringResource(R.string.text_cadastro_de_transacao),
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                color = Color.White
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row {
-            Text("Tipo:")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        )
+        {
+            Text(
+                stringResource(R.string.text_tipo)
+            )
             RadioButton(
                 selected = uiState.selectedType == TransactionType.DEBIT,
                 onClick = { onTypeChange(TransactionType.DEBIT) }
             )
-            Text("Débito")
+            Text(
+                stringResource(R.string.transaction_type_debit),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
             RadioButton(
                 selected = uiState.selectedType == TransactionType.CREDIT,
                 onClick = { onTypeChange(TransactionType.CREDIT) }
             )
-            Text("Crédito")
+            Text(
+                stringResource(R.string.transaction_type_credit),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -118,7 +165,7 @@ fun TransactionScreenContent(
         TextField(
             value = uiState.amount,
             onValueChange = onAmountChange,
-            label = { Text("Valor") },
+            label = { Text(stringResource(R.string.label_valor)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
@@ -128,7 +175,7 @@ fun TransactionScreenContent(
         TextField(
             value = uiState.description,
             onValueChange = onDescriptionChange,
-            label = { Text("Descrição") },
+            label = { Text(stringResource(R.string.label_descricao)) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -149,7 +196,7 @@ fun TransactionScreenContent(
             enabled = uiState.isSaveEnabled,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Salvar Transação")
+            Text(stringResource(R.string.text_salvar_transacao))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -158,7 +205,7 @@ fun TransactionScreenContent(
             onClick = onNavigateToStatement,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Ver Extrato")
+            Text(stringResource(R.string.text_ver_extrato))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -167,7 +214,7 @@ fun TransactionScreenContent(
             onClick = onCalculateBalance,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Calcular Saldo Total")
+            Text(stringResource(R.string.text_calcular_saldo_total))
         }
     }
 }
@@ -192,7 +239,8 @@ fun DatePickerField(
     }
 
     if (isDatePickerVisible) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
+        val datePickerState =
+            rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
         DatePickerDialog(
             onDismissRequest = onDismissDatePicker,
             confirmButton = {
@@ -202,7 +250,7 @@ fun DatePickerField(
             },
             dismissButton = {
                 TextButton(onClick = onDismissDatePicker) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.text_cancelar))
                 }
             }
         ) {
@@ -237,7 +285,7 @@ fun TransactionScreenPreview() {
             modifier = Modifier.padding(16.dp),
             uiState = TransactionScreenState(
                 amount = "123.45",
-                description = "Salario",
+                description = stringResource(R.string.description_salario),
                 date = "10/10/2024",
                 isSaveEnabled = true
             ),

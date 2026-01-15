@@ -14,5 +14,27 @@
     <string name="debit_detail_transport">Transporte</string>
     <string name="debit_detail_health">Saúde</string>
     <string name="debit_detail_housing">Moradia</string>
+    <string name="description_salario">Salario</string>
+    <string name="text_cancelar">Cancelar</string>
+    <string name="text_calcular_saldo_total">Calcular Saldo Total</string>
+    <string name="text_ver_extrato">Ver Extrato</string>
+    <string name="text_salvar_transacao">Salvar Transação</string>
+    <string name="label_descricao">Descrição</string>
+    <string name="text_tipo">Tipo:</string>
+    <string name="text_cadastro_de_transacao">Cadastro de Transação</string>
+    <string name="text_toast_saldo_total_rs">Saldo total: R$%1$s</string>
+    <string name="text_toast_transacao_salva">Transação salva!</string>
+    <string name="description_compras">Compras</string>
+    <string name="description_restaurante">Restaurante</string>
+    <string name="description_supermercado">Supermercado</string>
+    <string name="text_historico_de_transacoes">Histórico de Transações</string>
+    <string name="text_saldo">Saldo</string>
+    <string name="text_saidas">Saídas</string>
+    <string name="text_resumo_financeiro">Resumo Financeiro</string>
+    <string name="label_valor">Valor</string>
+    <string name="text_entradas">Entradas</string>
+    <string name="text_rs">R$ %1$s</string>
+    <string name="plus_signal">"+ "</string>
+    <string name="minus_signal">"- "</string>
 
 </resources>
